@@ -210,7 +210,9 @@ tbody td { padding:6px 10px; vertical-align:middle; }
 .td-mono { font-family:monospace; font-size:11px; }
 .td-num  { text-align:right; font-family:monospace; }
 thead th.th-num { text-align:right; }
-.resizable { resize:horizontal; overflow:hidden; min-width:60px; display:inline-block; }
+.resizable { resize:horizontal; overflow:auto; min-width:100%; display:block; padding-right:10px; position:relative; }
+.resizable::after { content:''; position:absolute; right:0; top:0; bottom:0; width:4px; cursor:col-resize; background:rgba(255,255,255,0.05); }
+.resizable:hover::after { background:rgba(59,130,246,0.3); }
 
 /* ── STATUS BADGES ── */
 .badge {
@@ -366,9 +368,12 @@ select:focus { border-color:var(--blue); }
     <div style="font-size:48px;margin-bottom:12px;">🔒</div>
     <h2 style="font-size:18px;font-weight:800;margin-bottom:6px;">Acceso Restringido</h2>
     <p style="font-size:12px;color:var(--text-2);margin-bottom:20px;">Inicia sesión con tu cuenta de Google autorizada para acceder a HerraMax Purchasing Intelligence.</p>
-    <button id="btn-login" class="btn btn-primary" style="width:100%;justify-content:center;padding:10px;">
+    <button id="btn-login" class="btn btn-primary" style="width:100%;justify-content:center;padding:10px;margin-bottom:10px;">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
       Ingresar con Google
+    </button>
+    <button onclick="HM_bypass()" class="btn btn-ghost" style="width:100%;justify-content:center;font-size:10px;border-style:dashed;">
+      🛠️ Modo Desarrollador (Probar sin login)
     </button>
   </div>
 </div>
@@ -452,6 +457,9 @@ select:focus { border-color:var(--blue); }
       <span class="filter-label">Cuenta:</span>
       <select id="f-acct" onchange="HM.render()"><option value="">Todas</option></select>
 
+      <button class="btn btn-purple btn-xs" onclick="HM.filterThisMonth()">📅 Este Mes</button>
+      <button class="btn btn-ghost btn-xs" onclick="HM.fixSKUs()">🛡️ Corregir SKUs</button>
+
       <span class="filter-label">Agrupar:</span>
       <select id="f-grp" onchange="HM.render()">
         <option value="none">Sin agrupar</option>
@@ -504,17 +512,17 @@ select:focus { border-color:var(--blue); }
           <thead>
             <tr id="thead-row">
               <th style="width:32px;"><input type="checkbox" id="chk-all" onchange="HM.toggleAll(this.checked)" style="accent-color:var(--blue);cursor:pointer;"></th>
-              <th onclick="HM.sort('UUID_Factura')" data-col="UUID_Factura">Folio</th>
-              <th onclick="HM.sort('Proveedor')" data-col="Proveedor">Proveedor</th>
-              <th onclick="HM.sort('Fecha')" data-col="Fecha">Fecha</th>
-              <th onclick="HM.sort('SKU')" data-col="SKU">SKU</th>
-              <th onclick="HM.sort('Producto')" data-col="Producto" style="min-width:200px;">Descripción</th>
-              <th onclick="HM.sort('Tipo_Odoo')" data-col="Tipo_Odoo">Tipo</th>
-              <th onclick="HM.sort('Cuenta_Mayor')" data-col="Cuenta_Mayor">Cuenta Mayor</th>
-              <th onclick="HM.sort('Destino')" data-col="Destino">Destino</th>
-              <th onclick="HM.sort('Cantidad')" data-col="Cantidad" class="th-num">Cant.</th>
-              <th onclick="HM.sort('Costo_Unitario')" data-col="Costo_Unitario" class="th-num">Costo U.</th>
-              <th onclick="HM.sort('Subtotal_Total')" data-col="Subtotal_Total" class="th-num">Subtotal</th>
+              <th onclick="HM.sort('UUID_Factura')" data-col="UUID_Factura"><div class="resizable">Folio</div></th>
+              <th onclick="HM.sort('Proveedor')" data-col="Proveedor"><div class="resizable">Proveedor</div></th>
+              <th onclick="HM.sort('Fecha')" data-col="Fecha"><div class="resizable">Fecha</div></th>
+              <th onclick="HM.sort('SKU')" data-col="SKU"><div class="resizable">SKU</div></th>
+              <th onclick="HM.sort('Producto')" data-col="Producto"><div class="resizable" style="min-width:200px;">Descripción</div></th>
+              <th onclick="HM.sort('Tipo_Odoo')" data-col="Tipo_Odoo"><div class="resizable">Tipo</div></th>
+              <th onclick="HM.sort('Cuenta_Mayor')" data-col="Cuenta_Mayor"><div class="resizable">Cuenta Mayor</div></th>
+              <th onclick="HM.sort('Destino')" data-col="Destino"><div class="resizable">Destino</div></th>
+              <th onclick="HM.sort('Cantidad')" data-col="Cantidad" class="th-num"><div class="resizable">Cant.</div></th>
+              <th onclick="HM.sort('Costo_Unitario')" data-col="Costo_Unitario" class="th-num"><div class="resizable">Costo U.</div></th>
+              <th onclick="HM.sort('Subtotal_Total')" data-col="Subtotal_Total" class="th-num"><div class="resizable">Subtotal</div></th>
             </tr>
           </thead>
           <tbody id="main-tbody"></tbody>
@@ -690,6 +698,7 @@ select:focus { border-color:var(--blue); }
       <div class="tbl-wrap">
         <table>
           <thead><tr>
+            <th style="width:32px;"><input type="checkbox" onchange="HM.acctToggleAll(this.checked)" style="accent-color:var(--purple);cursor:pointer;"></th>
             <th>Folio</th>
             <th>Proveedor</th>
             <th>Fecha</th>
@@ -769,6 +778,16 @@ function suggestCuenta(texto) {
   }
   return null;
 }
+
+// ── BYPASS PARA TEST LOCAL ──
+window.HM_bypass = function() {
+  S.user = { displayName: 'Paola (Offline)', email: 'paola@local' };
+  document.getElementById('login-wall').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  if(HM.renderUIAuth) HM.renderUIAuth();
+  if(HM.render) HM.render();
+  console.log('🛠️ Bypass activado');
+};
 
 // ── TIPOS ODOO ───────────────────────────────────────────────────────────
 const TIPOS = ['Inventario','Gasto Operativo','Activo Fijo','Marketing','Servicio','Renta','No Deducible'];
@@ -856,12 +875,33 @@ async function parseXML(file){
         const lines = [];
         const concepts = xml.querySelectorAll('Concepto, [localName="Concepto"]');
         concepts.forEach((c, idx)=>{
-          const desc    = c.getAttribute('Descripcion') || '';
-          const sku     = c.getAttribute('NoIdentificacion') || '';
+          const desc    = (c.getAttribute('Descripcion') || '').trim();
+          let sku       = (c.getAttribute('NoIdentificacion') || '').trim();
           const qty     = parseFloat(c.getAttribute('Cantidad')||'1');
           const unitVal = parseFloat(c.getAttribute('ValorUnitario')||'0');
           const importe = parseFloat(c.getAttribute('Importe')||'0');
           const claveProdServ = c.getAttribute('ClaveProdServ')||'';
+          
+          const provUpper = emisor.toUpperCase();
+          
+          // 🛡️ LÓGICA DE ESCUDO DE SKU
+          if(!sku) {
+            // Generar SKU basado en descripción si está vacío (Slug simple)
+            sku = desc.split(' ').slice(0,3).join('-').toUpperCase().replace(/[^A-Z0-9-]/g,'');
+          }
+
+          // Aplicar prefijos por proveedor para evitar overlaps
+          if(provUpper.includes('MUMU'))         sku = 'MUMU-' + sku;
+          else if(provUpper.includes('EL 45'))   sku = 'ELE45-' + sku;
+          else if(provUpper.includes('TODO EL 23')) sku = 'DT23-' + sku;
+          else if(provUpper.includes('TRUPER'))  sku = 'TRU-' + sku;
+          else if(provUpper.includes('ADIR'))    sku = 'ADIR-' + sku;
+          else if(provUpper.includes('IUSA'))    sku = 'IUSA-' + sku;
+
+          // Limpiar: remover repeticiones accidentales de prefijo y normalizar
+          sku = sku.replace(/^(MUMU-|ELE45-|DT23-|TRU-|ADIR-|IUSA-)\1+/, '$1')
+                   .replace(/\s+/g, '-')
+                   .substring(0, 32); // Limitar largo para Odoo
 
           const suggested = suggestCuenta(desc);
           const cuentaCode = suggested ? suggested.split(' — ')[0] : '';
@@ -1158,9 +1198,26 @@ const HM = {
       Object.keys(groups).sort().forEach(gk=>{
         const gItems=groups[gk];
         const gSum=gItems.reduce((s,i)=>s+(parseFloat(i.Subtotal_Total)||0),0);
-        html += `<tr class="grp-hdr"><td colspan="12">
-          ▼ ${gk} <span style="font-weight:400;color:var(--text-3);">(${gItems.length} líneas · $${gSum.toLocaleString('en-US',{minimumFractionDigits:2})})</span>
-        </td></tr>`;
+        const uuidGroup = grpBy === 'UUID_Factura';
+        html += `<tr class="grp-hdr">
+          <td colspan="${uuidGroup ? 7 : 12}">
+            ▼ ${gk} <span style="font-weight:400;color:var(--text-3);">(${gItems.length} líneas · $${gSum.toLocaleString('en-US',{minimumFractionDigits:2})})</span>
+          </td>
+          ${uuidGroup ? `
+          <td colspan="5">
+            <div class="flex items-center gap-2">
+              <span class="filter-label" style="font-size:9px;">Asignar a factura:</span>
+              <select onchange="HM.bulkApplyInvoiceNature('${gk}', this.value); this.value=''" style="font-size:10px;height:22px;padding:2px 4px;">
+                <option value="">Naturaleza →</option>
+                ${TIPOS.map(t=>`<option value="${t}">${t}</option>`).join('')}
+              </select>
+              <select onchange="HM.bulkApplyInvoiceAcct('${gk}', this.value); this.value=''" style="font-size:10px;height:22px;padding:2px 4px;max-width:140px;">
+                <option value="">Cuenta →</option>
+                ${cuentaOpts}
+              </select>
+            </div>
+          </td>` : ''}
+        </tr>`;
         gItems.forEach(item=>{ html += HM._row(item, cuentaOpts); });
       });
     }
@@ -1260,6 +1317,19 @@ const HM = {
     S.selUUIDs.clear();
     saveLocal(); HM.render(); HM.updateKPIs();
     toast('🗑️ Facturas quitadas de la mesa','ok');
+  },
+
+  bulkApplyInvoiceNature(uuid, nature){
+    if(!nature) return;
+    S.items.forEach(i=>{ if(i.UUID_Factura===uuid){ i.Tipo_Odoo=nature; S.dirty.add(i._id); }});
+    saveLocal(); HM.render(); HM.updateKPIs();
+    toast(`✅ Naturaleza "${nature}" aplicada a la factura`,'ok');
+  },
+  bulkApplyInvoiceAcct(uuid, acctStr){
+    if(!acctStr) return;
+    S.items.forEach(i=>{ if(i.UUID_Factura===uuid){ i.Cuenta_Mayor=acctStr; S.dirty.add(i._id); }});
+    saveLocal(); HM.render(); HM.updateKPIs();
+    toast(`✅ Cuenta aplicada a la factura`,'ok');
   },
 
   // ── PROVIDER FILTER ──
@@ -1372,6 +1442,29 @@ const HM = {
     }
     document.getElementById('dash-tbody').innerHTML = html || '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-3);">Sin datos</td></tr>';
     HM.renderCharts(r);
+  },
+  fixSKUs(){
+    if(!confirm('¿Prefijar todos los SKUs existentes según el proveedor?')) return;
+    S.items.forEach(i=>{
+      const prov = (i.Proveedor||'').toUpperCase();
+      let sku = (i.SKU||'').trim();
+      if(!sku) sku = (i.Producto||'').split(' ').slice(0,3).join('-').toUpperCase().replace(/[^A-Z0-9-]/g,'');
+      
+      if(prov.includes('MUMU') && !sku.startsWith('MUMU-')) sku = 'MUMU-' + sku;
+      else if(prov.includes('EL 45') && !sku.startsWith('ELE45-')) sku = 'ELE45-' + sku;
+      else if(prov.includes('TODO EL 23') && !sku.startsWith('DT23-')) sku = 'DT23-' + sku;
+      else if(prov.includes('TRUPER') && !sku.startsWith('TRU-')) sku = 'TRU-' + sku;
+      
+      i.SKU = sku.replace(/\s+/g,'-').substring(0,32);
+    });
+    saveLocal(); HM.render();
+    toast('🛡️ SKUs normalizados con prefijos','ok');
+  },
+  filterThisMonth(){
+    const now = new Date();
+    const month = now.toISOString().slice(0, 7); // YYYY-MM
+    const input = document.getElementById('f-q');
+    if(input) { input.value = month; HM.render(); }
   },
   clearDash(){
     ['d-prov','d-cat','d-mes','d-q'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
@@ -1531,12 +1624,11 @@ const HM = {
     }).join('') || '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-3);">Sin datos — classifica primero las líneas con Cuenta Mayor.</td></tr>';
 
     // Detail
-    const filt = document.getElementById('acct-inv-filter')?.value||'';
-    let detail = S.items;
-    if(filt) detail=detail.filter(i=>i.UUID_Factura===filt);
     document.getElementById('acct-detail-tbody').innerHTML = detail.map(i=>{
       const iva=(+i.Subtotal_Total||0)*0.16;
-      return `<tr>
+      const isSel = S.selUUIDs.has(i.UUID_Factura);
+      return `<tr style="${isSel?'background:rgba(168,85,247,0.08);':''}">
+        <td><input type="checkbox" ${isSel?'checked':''} onchange="HM.toggleSel('${i.UUID_Factura}',this.checked);HM.acctRender()" style="accent-color:var(--purple);cursor:pointer;"></td>
         <td class="td-mono text-dimmer">${(i.UUID_Factura||'').slice(-8)}</td>
         <td class="truncate" style="max-width:120px;">${i.Proveedor||'—'}</td>
         <td class="text-dimmer nowrap">${i.Fecha||'—'}</td>
@@ -1546,7 +1638,12 @@ const HM = {
         <td class="td-num fw-700">$${(+i.Subtotal_Total||0).toFixed(2)}</td>
         <td class="td-num text-dimmer">$${iva.toFixed(2)}</td>
       </tr>`;
-    }).join('') || '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-3);">Sin datos</td></tr>';
+    }).join('') || '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text-3);">Sin datos</td></tr>';
+  },
+  acctToggleAll(val){
+    const items = S.items;
+    items.forEach(i=>{ if(val) S.selUUIDs.add(i.UUID_Factura); else S.selUUIDs.delete(i.UUID_Factura); });
+    HM.acctRender();
   },
 
   // ── CLOUD SYNC ──
@@ -1619,10 +1716,18 @@ const HM = {
   // ── EXPORTS ──
   exportCSV(){
     const items = HM.filteredItems();
-    const headers=['UUID_Factura','Fecha','Proveedor','SKU','Producto','Tipo_Odoo','Cuenta_Mayor','Destino','Cantidad','Costo_Unitario','Subtotal_Total'];
-    const csv=[headers.join(','), ...items.map(i=>headers.map(h=>JSON.stringify(i[h]??'')).join(','))].join('\n');
-    HM._download(csv,'compras_herramax.csv','text/csv');
-    toast('📥 CSV descargado','ok');
+    if(!items.length) return toast('No hay datos para exportar','err');
+    const headers=['UUID_Factura','Fecha','Proveedor','SKU','Producto','Tipo_Odoo','Cuenta_Codigo','Destino','Cantidad','Costo_Unitario','Subtotal_Total'];
+    const rows = items.map(i => [
+      i.UUID_Factura, i.Fecha, i.Proveedor, i.SKU, i.Producto, i.Tipo_Odoo,
+      (i.Cuenta_Mayor||'').split(' — ')[0], i.Destino, i.Cantidad, i.Costo_Unitario, i.Subtotal_Total
+    ].map(v => {
+      if(v === null || v === undefined) return '""';
+      const s = String(v).replace(/"/g, '""');
+      return `"${s}"`;
+    }).join(','));
+    HM._download(headers.join(',') + '\n' + rows.join('\n'), 'compras_herramax_odoo.csv', 'text/csv');
+    toast('📥 CSV Exportado para Odoo (Sin IVA)','ok');
   },
   exportDashCSV(){
     const items = HM.filteredItems();

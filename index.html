@@ -1053,7 +1053,16 @@ const HM = {
     }
     document.getElementById('btn-login')?.addEventListener('click', HM.login);
   },
-  async login(){ try{ await fb().signInWithPopup(fb().auth, new fb().GoogleAuthProvider()); }catch(e){toast('Error de login','err');console.error(e);} },
+  async login(){ 
+    try { 
+      await fb().signInWithPopup(fb().auth, new fb().GoogleAuthProvider()); 
+      toast('✅ Sesión iniciada', 'ok');
+    } catch(e) { 
+      console.error(e); 
+      const msg = e.code ? `Error: ${e.code}` : 'Error de login';
+      toast(msg, 'err'); 
+    } 
+  },
   async logout(){ await fb().signOut(fb().auth); },
 
   // ── FILE HANDLING ──

@@ -354,10 +354,9 @@ select:focus { border-color:var(--blue); }
 
 <!-- ════════════════════════════════ NAV ════════════════════════════════ -->
 <nav id="nav">
-  <div class="nav-logo">
     <div class="nav-logo-icon">HM</div>
     <span>Purchasing Intelligence</span>
-    <span style="font-size:10px;font-weight:400;color:var(--text-3);margin-left:4px;">v2.0</span>
+    <span style="font-size:10px;font-weight:900;color:var(--amber);margin-left:4px;background:rgba(245,158,11,0.1);padding:1px 4px;border-radius:4px;">v3.0 FIX</span>
   </div>
   <div class="nav-right" id="nav-auth-area">
     <!-- injected by JS -->
@@ -1060,14 +1059,17 @@ const HM = {
   },
   async login(){ 
     try { 
+      toast('🔑 Abriendo ventana de Google...', 'inf');
       const result = await fb().signInWithPopup(fb().auth, new fb().GoogleAuthProvider()); 
-      toast(`✅ Bienvenido, ${result.user.displayName}`, 'ok');
+      toast(`✅ Hola ${result.user.displayName}, acceso concedido`, 'ok');
     } catch(e) { 
-      console.error(e); 
-      let msg = 'Error de conexión';
-      if(e.code === 'auth/unauthorized-domain') msg = 'Dominio no autorizado en Firebase (Añade paocarvajal.github.io)';
-      if(e.code === 'auth/popup-blocked') msg = 'Popup bloqueado por el navegador';
-      toast(msg, 'err'); 
+      console.error('FIREBASE AUTH ERROR:', e); 
+      let msg = `Error: ${e.code || 'Desconocido'}`;
+      if(e.code === 'auth/unauthorized-domain') msg = 'Dominio no autorizado. Verifica la consola de Firebase.';
+      if(e.code === 'auth/popup-blocked') msg = '⚠️ Navegador bloqueó la ventana. Activa los popups o sal de Incógnito.';
+      if(e.code === 'auth/popup-closed-by-user') msg = 'Cancelaste el inicio de sesión.';
+      if(e.code === 'auth/network-request-failed') msg = 'Error de conexión a internet.';
+      toast(`🚀 [v3] ${msg}`, 'err'); 
     } 
   },
   async logout(){ await fb().signOut(fb().auth); },

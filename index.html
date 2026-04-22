@@ -884,24 +884,27 @@ async function parseXML(file){
           
           const provUpper = emisor.toUpperCase();
           
-          // 🛡️ LÓGICA DE ESCUDO DE SKU
+          // 🛡️ LÓGICA DE ESCUDO DE SKU (REFORZADA)
           if(!sku) {
             // Generar SKU basado en descripción si está vacío (Slug simple)
             sku = desc.split(' ').slice(0,3).join('-').toUpperCase().replace(/[^A-Z0-9-]/g,'');
           }
 
           // Aplicar prefijos por proveedor para evitar overlaps
-          if(provUpper.includes('MUMU'))         sku = 'MUMU-' + sku;
-          else if(provUpper.includes('EL 45'))   sku = 'ELE45-' + sku;
-          else if(provUpper.includes('TODO EL 23')) sku = 'DT23-' + sku;
-          else if(provUpper.includes('TRUPER'))  sku = 'TRU-' + sku;
-          else if(provUpper.includes('ADIR'))    sku = 'ADIR-' + sku;
-          else if(provUpper.includes('IUSA'))    sku = 'IUSA-' + sku;
+          let prefix = '';
+          if(provUpper.includes('MUMU'))         prefix = 'MUMU-';
+          else if(provUpper.includes('EL 45'))   prefix = 'ELE45-';
+          else if(provUpper.includes('TODO EL 23')) prefix = 'DT23-';
+          else if(provUpper.includes('TRUPER'))  prefix = 'TRU-';
+          else if(provUpper.includes('ADIR'))    prefix = 'ADIR-';
+          else if(provUpper.includes('IUSA'))    prefix = 'IUSA-';
+          else if(provUpper.includes('IGOTO'))   prefix = 'IGO-';
+          else if(provUpper.includes('ARGOS'))   prefix = 'ARG-';
 
-          // Limpiar: remover repeticiones accidentales de prefijo y normalizar
-          sku = sku.replace(/^(MUMU-|ELE45-|DT23-|TRU-|ADIR-|IUSA-)\1+/, '$1')
-                   .replace(/\s+/g, '-')
-                   .substring(0, 32); // Limitar largo para Odoo
+          // Asegurar que solo tenga un prefijo y esté limpio
+          sku = sku.replace(/^(MUMU-|ELE45-|DT23-|TRU-|ADIR-|IUSA-|IGO-|ARG-)/, '');
+          sku = prefix + sku;
+          sku = sku.replace(/\s+/g, '-').replace(/-+/g, '-').substring(0, 32);
 
           const suggested = suggestCuenta(desc);
           const cuentaCode = suggested ? suggested.split(' — ')[0] : '';
@@ -1055,11 +1058,13 @@ const HM = {
   },
   async login(){ 
     try { 
-      await fb().signInWithPopup(fb().auth, new fb().GoogleAuthProvider()); 
-      toast('✅ Sesión iniciada', 'ok');
+      const result = await fb().signInWithPopup(fb().auth, new fb().GoogleAuthProvider()); 
+      toast(`✅ Bienvenido, ${result.user.displayName}`, 'ok');
     } catch(e) { 
       console.error(e); 
-      const msg = e.code ? `Error: ${e.code}` : 'Error de login';
+      let msg = 'Error de conexión';
+      if(e.code === 'auth/unauthorized-domain') msg = 'Dominio no autorizado en Firebase (Añade paocarvajal.github.io)';
+      if(e.code === 'auth/popup-blocked') msg = 'Popup bloqueado por el navegador';
       toast(msg, 'err'); 
     } 
   },
@@ -1722,21 +1727,32 @@ const HM = {
     else{ dc.classList.add('hidden'); ss.classList.remove('hidden'); }
   },
 
-  // ── EXPORTS ──
+  // ── EXPORTS (PLANTILLA NATIVA ODOO) ──
   exportCSV(){
     const items = HM.filteredItems();
     if(!items.length) return toast('No hay datos para exportar','err');
-    const headers=['UUID_Factura','Fecha','Proveedor','SKU','Producto','Tipo_Odoo','Cuenta_Codigo','Destino','Cantidad','Costo_Unitario','Subtotal_Total'];
+    
+    // Mapeo de Tipos para Odoo
+    const typeMap = { 'Inventario':'product', 'Servicio':'service', 'Gasto':'consu', 'Marketing':'consu', 'Activo Fijo':'product' };
+
+    const headers=['Internal Reference','Name','Cost','Product Type','Category','Vendor','Invoice Reference','Quantity'];
     const rows = items.map(i => [
-      i.UUID_Factura, i.Fecha, i.Proveedor, i.SKU, i.Producto, i.Tipo_Odoo,
-      (i.Cuenta_Mayor||'').split(' — ')[0], i.Destino, i.Cantidad, i.Costo_Unitario, i.Subtotal_Total
+      i.SKU, 
+      i.Producto, 
+      i.Costo_Unitario,
+      typeMap[i.Tipo_Odoo] || 'product',
+      (i.Cuenta_Mayor||'All').split(' — ')[0],
+      i.Proveedor,
+      i.UUID_Factura,
+      i.Cantidad
     ].map(v => {
       if(v === null || v === undefined) return '""';
       const s = String(v).replace(/"/g, '""');
       return `"${s}"`;
     }).join(','));
-    HM._download(headers.join(',') + '\n' + rows.join('\n'), 'compras_herramax_odoo.csv', 'text/csv');
-    toast('📥 CSV Exportado para Odoo (Sin IVA)','ok');
+    
+    HM._download(headers.join(',') + '\n' + rows.join('\n'), 'Importador_Productos_Odoo_HerraMax.csv', 'text/csv');
+    toast('🚀 Plantilla Lista para Odoo (Sin parches)','ok');
   },
   exportDashCSV(){
     const items = HM.filteredItems();
